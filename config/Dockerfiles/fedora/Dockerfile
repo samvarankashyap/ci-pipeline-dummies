@@ -10,4 +10,4 @@ RUN mkdir -p /etc/ansible/roles \
 
 ENV ANSIBLE_NOCOWS 1
 
-CMD ansible localhost -m setup
+CMD tail -f /dev/null

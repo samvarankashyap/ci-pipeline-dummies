@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: BuildConfig
+metadata:
+  name: myfirstpipeline # rename the pipeline
+  namespace: minishift-demo # rename namespace
+  labels:
+    name: myfirstpipeline # rename label
+  annotations:
+    pipeline.alpha.openshift.io/uses: '[{"name": "testpython", "namespace": "", "kind": "DeploymentConfig"}]' # rename 
+spec:
+  triggers: []
+  runPolicy: Serial
+  source:
+    type: None
+  strategy:
+    type: JenkinsPipeline
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        node() {
+        stage 'build'
+        openshiftBuild(buildConfig: 'testpython', showBuildLogs: 'true') # change the build config 
+        stage 'deploy'
+        openshiftDeploy(deploymentConfig: 'testpython') # change the deployment config
+        openshiftScale(deploymentConfig: 'testpython',replicaCount: '1') # change the deployment config
+        }
+  output: {}
+  resources: {}
+  postCommit: {}
+  nodeSelector: null

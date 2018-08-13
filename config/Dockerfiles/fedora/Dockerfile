@@ -1,8 +1,8 @@
 FROM fedora:latest
 MAINTAINER http://fedoraproject.org/wiki/Cloud
 
-RUN dnf -y install ansible
+RUN mkdir -p /workspace
 
-RUN echo "echo 'Hello';" >> /tmp/hello.sh
+WORKDIR /workspace
 
 CMD tail -f /dev/null

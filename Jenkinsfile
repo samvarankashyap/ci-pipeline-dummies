@@ -4,7 +4,7 @@ node() {
     }
     stage ('deploy_container'){
     // make sure you have twinecreds with keys twine_username, twine_password set for uploading pypi packages
-        openshiftCreateResource(jsonyaml: '{"kind":"Pod","apiVersion":"v1","metadata":{"name":"hello-openshift","creationTimestamp":null,"labels":{"name":"hello-openshift"}},"spec":{"containers":[{"name":"hello-openshift","image":"172.30.1.1:5000/minishift-demo/fedora","ports":[{"containerPort":8080,"protocol":"TCP"}],"resources":{},"volumeMounts":[{"name":"tmp","mountPath":"/tmp"}],"env":[{"name":"TWINE_USERNAME","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_username"}}},{"name":"TWINE_PASSWORD","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_password"}}}],"terminationMessagePath":"/dev/termination-log","imagePullPolicy":"IfNotPresent","capabilities":{},"securityContext":{"capabilities":{},"privileged":false}}],"volumes":[{"name":"tmp","emptyDir":{}}],"restartPolicy":"Always","dnsPolicy":"ClusterFirst","serviceAccount":""},"status":{}}')
+        openshiftCreateResource(jsonyaml: '{"kind":"Pod","apiVersion":"v1","metadata":{"name":"hello-openshift","creationTimestamp":null,"labels":{"name":"hello-openshift"}},"spec":{"containers":[{"name":"hello-openshift","image":"172.30.1.1:5000/demo/fedora","ports":[{"containerPort":8080,"protocol":"TCP"}],"resources":{},"volumeMounts":[{"name":"tmp","mountPath":"/tmp"}],"env":[{"name":"TWINE_USERNAME","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_username"}}},{"name":"TWINE_PASSWORD","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_password"}}}],"terminationMessagePath":"/dev/termination-log","imagePullPolicy":"IfNotPresent","capabilities":{},"securityContext":{"capabilities":{},"privileged":false}}],"volumes":[{"name":"tmp","emptyDir":{}}],"restartPolicy":"Always","dnsPolicy":"ClusterFirst","serviceAccount":""},"status":{}}')
     }
 
     stage('wait'){
@@ -12,17 +12,17 @@ node() {
         sleep 30 
     }
     stage('clone_src'){
-        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'git', arguments: ['clone','https://github.com/samvarankashyap/gummybears', '.'])
-        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'ls')
+        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'git', arguments: ['clone','https://github.com/samvarankashyap/gummybears', '.'])
+        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'ls')
     }
     stage('install_src'){
-        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'pwd')
-        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'python', arguments: ['setup.py', 'install'])
+        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'pwd')
+        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'python', arguments: ['setup.py', 'install'])
     }
 
     stage ('test'){
-        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'gummybears')
-        def response = openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'python', arguments: ['test_gummybears.py'])
+        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'gummybears')
+        def response = openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'python', arguments: ['test_gummybears.py'])
             if ( response.error == "" && response.failure == "" ) {
                 println('Stdout: '+response.stdout.trim())
                 println('Stderr: '+response.stderr.trim())
@@ -30,12 +30,12 @@ node() {
     }
     
     stage ('build'){
-        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'python', arguments: ['setup.py', 'sdist'])
+        openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'python', arguments: ['setup.py', 'sdist'])
     }
     
     stage ('release'){
 
-        def response = openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'minishift-demo', command: 'twine', arguments: ['upload', 'dist/*'])
+        def response = openshiftExec(pod: 'hello-openshift', container: 'hello-openshift', namespace: 'demo', command: 'twine', arguments: ['upload', 'dist/*'])
             if ( response.error == "" && response.failure == "" ) {
                 println('Stdout: '+response.stdout.trim())
                 println('Stderr: '+response.stderr.trim())
@@ -43,7 +43,7 @@ node() {
     }
 
     stage ('cleanup'){
-        openshiftDeleteResourceByJsonYaml(jsonyaml: '{"kind":"Pod","apiVersion":"v1","metadata":{"name":"hello-openshift","creationTimestamp":null,"labels":{"name":"hello-openshift"}},"spec":{"containers":[{"name":"hello-openshift","image":"172.30.1.1:5000/minishift-demo/fedora","ports":[{"containerPort":8080,"protocol":"TCP"}],"resources":{},"volumeMounts":[{"name":"tmp","mountPath":"/tmp"}],"env":[{"name":"TWINE_USERNAME","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_username"}}},{"name":"TWINE_PASSWORD","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_password"}}}],"terminationMessagePath":"/dev/termination-log","imagePullPolicy":"IfNotPresent","capabilities":{},"securityContext":{"capabilities":{},"privileged":false}}],"volumes":[{"name":"tmp","emptyDir":{}}],"restartPolicy":"Always","dnsPolicy":"ClusterFirst","serviceAccount":""},"status":{}}')
+        openshiftDeleteResourceByJsonYaml(jsonyaml: '{"kind":"Pod","apiVersion":"v1","metadata":{"name":"hello-openshift","creationTimestamp":null,"labels":{"name":"hello-openshift"}},"spec":{"containers":[{"name":"hello-openshift","image":"172.30.1.1:5000/demo/fedora","ports":[{"containerPort":8080,"protocol":"TCP"}],"resources":{},"volumeMounts":[{"name":"tmp","mountPath":"/tmp"}],"env":[{"name":"TWINE_USERNAME","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_username"}}},{"name":"TWINE_PASSWORD","valueFrom":{"configMapKeyRef":{"name":"twinecreds","key":"twine_password"}}}],"terminationMessagePath":"/dev/termination-log","imagePullPolicy":"IfNotPresent","capabilities":{},"securityContext":{"capabilities":{},"privileged":false}}],"volumes":[{"name":"tmp","emptyDir":{}}],"restartPolicy":"Always","dnsPolicy":"ClusterFirst","serviceAccount":""},"status":{}}')
 
     }
 }
